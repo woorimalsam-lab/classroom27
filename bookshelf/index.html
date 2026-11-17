@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>우리 반 책장</title>
+  <link rel="stylesheet" href="../fonts.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a href="../">← 학급 게시판</a>
+    <div class="brand">📚 우리 반 책장</div>
+  </header>
+
+  <main id="shelf-view" class="view">
+    <div class="shelf-wrap">
+      <h1 class="shelf-title">책장</h1>
+      <p class="muted">책을 누르면 열립니다. 책은 이 브라우저에 저장돼요. 다른 기기에서도 보려면 <b>내보내기</b>로 파일을 받아 옮겨 주세요.</p>
+      <div id="shelf" class="shelf"></div>
+      <div class="shelf-actions">
+        <button id="new-book" class="btn btn-primary">+ 새 책 (10월 템플릿)</button>
+        <label class="btn btn-ghost">📥 파일에서 가져오기
+          <input id="import-file" type="file" accept=".json,application/json" class="visually-hidden" />
+        </label>
+      </div>
+    </div>
+  </main>
+
+  <main id="reader-view" class="view hidden">
+    <div class="reader-bar">
+      <button id="back-shelf" class="btn btn-ghost">📚 책장</button>
+      <strong id="reader-title" class="reader-title"></strong>
+      <span id="page-label" class="muted"></span>
+      <span class="spacer"></span>
+      <button id="rename-book" class="btn btn-ghost">✏️ 책 이름</button>
+      <button id="export-book" class="btn btn-ghost">💾 내보내기</button>
+      <button id="print-book" class="btn btn-ghost">🖨️ 인쇄 · PDF</button>
+      <button id="delete-book" class="btn btn-ghost btn-danger">🗑️ 삭제</button>
+    </div>
+    <div class="stage-wrap">
+      <div id="stage" class="stage"></div>
+    </div>
+    <nav class="pager">
+      <button id="prev" class="btn btn-icon" aria-label="이전 쪽">‹</button>
+      <span id="spread-no"></span>
+      <button id="next" class="btn btn-icon" aria-label="다음 쪽">›</button>
+    </nav>
+    <p class="hint">칸을 누르면 바로 글을 고칠 수 있어요. 사진 칸을 누르면 사진을 넣을 수 있고, ← → 키로도 넘길 수 있어요.</p>
+  </main>
+
+  <input id="image-input" type="file" accept="image/*" class="visually-hidden" />
+  <div id="toast" class="toast hidden" role="status"></div>
+  <script src="app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>학급 게시판</title>
+  <link rel="stylesheet" href="fonts.css" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preload" as="font" type="font/woff2" href="fonts/all-1.woff2" crossorigin />
+  <link rel="preload" as="font" type="font/woff2" href="fonts/power-1.woff2" crossorigin />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏫</text></svg>" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">🏫 <span id="brand-name">학급 게시판</span></div>
+    <div class="account">
+      <a id="mail-link" class="mail-link" href="mailto:woorimalsam@gmail.com" title="선생님께 메일 보내기">✉️ <span id="mail-text">woorimalsam@gmail.com</span></a>
+      <button id="theme-btn" class="btn btn-ghost btn-icon" title="다크 모드 전환">🌙</button>
+      <span id="teacher-badge" class="badge hidden">👩‍🏫 교사 모드</span>
+      <button id="login-btn" class="btn btn-ghost btn-sm" title="교사용 로그인">교사 로그인</button>
+      <button id="logout-btn" class="btn btn-ghost btn-sm hidden">로그아웃</button>
+    </div>
+  </header>
+
+  <nav class="tabbar" id="tabbar">
+    <button class="navbtn active" data-view="notice"><span class="navicon">📢</span>공지사항</button>
+    <button class="navbtn" data-view="timetable"><span class="navicon">🕐</span>시간표</button>
+    <button class="navbtn" data-view="attendance"><span class="navicon">📋</span>출결</button>
+    <button class="navbtn" data-view="calendar"><span class="navicon">📅</span>일정</button>
+    <button class="navbtn" data-view="meal"><span class="navicon">🍽️</span>급식</button>
+    <button class="navbtn" data-view="roster"><span class="navicon">📄</span>명렬표</button>
+    <button class="navbtn" data-view="survey"><span class="navicon">📊</span>설문</button>
+    <button class="navbtn" data-view="tools"><span class="navicon">🛠️</span>도구</button>
+    <button class="navbtn" data-view="secret"><span class="navicon">💌</span>익명 우체통</button>
+    <a class="navbtn navlink" href="bookshelf/"><span class="navicon">📚</span>우리 반 책장</a>
+  </nav>
+
+  <main class="main">
+    <!-- ============ 공지사항 ============ -->
+    <section id="view-notice" class="view">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>📢 공지사항</h2>
+          <button id="notice-add-btn" class="btn btn-primary btn-sm hidden">+ 공지 쓰기</button>
+        </div>
+        <p class="muted view-desc">마감 일자와 제출 서류를 확인하세요. <b>D-day가 가까운 공지</b>는 위에 표시됩니다.</p>
+        <div id="notice-list" class="notice-list">
+          <div class="empty-state">공지를 불러오는 중…</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 시간표 ============ -->
+    <section id="view-timetable" class="view hidden">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>🕐 시간표</h2>
+          <span id="tt-meta" class="muted small"></span>
+        </div>
+        <div class="tt-toolbar">
+          <select id="tt-grade" title="학년"></select>
+          <select id="tt-class" title="반"></select>
+          <select id="tt-week" title="주차"></select>
+        </div>
+        <div id="tt-grid" class="tt-grid-wrap"><div class="empty-state">시간표를 불러오는 중…</div></div>
+        <p class="muted small" style="margin-top:12px;"><span class="tt-badge">변경</span> 표시는 이동·보강 등 변경된 수업입니다. 시간표는 컴시간에서 자동 갱신됩니다.</p>
+      </div>
+    </section>
+
+    <!-- ============ 출결 ============ -->
+    <section id="view-attendance" class="view hidden">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>📋 출결 현황</h2>
+          <span id="att-updated" class="muted small"></span>
+          <button id="classlink-btn-att" class="btn btn-ghost btn-sm hidden">🔑 학생용 링크</button>
+        </div>
+        <p class="muted view-desc">🔒 우리 반만 볼 수 있어요. 이름은 가려서 보여 줍니다(김*수).</p>
+        <div class="att-toolbar">
+          <select id="att-class" title="학급"></select>
+          <div class="datenav">
+            <button id="att-prev" class="btn btn-icon" title="이전 날">‹</button>
+            <input id="att-date" type="date" />
+            <button id="att-next" class="btn btn-icon" title="다음 날">›</button>
+            <button id="att-today" class="btn btn-ghost btn-sm">오늘</button>
+          </div>
+        </div>
+        <div id="att-dayinfo" class="att-dayinfo"></div>
+        <div id="att-content"><div class="empty-state">출결 정보를 불러오는 중…</div></div>
+      </div>
+    </section>
+
+    <!-- ============ 일정 (학사일정) ============ -->
+    <section id="view-calendar" class="view hidden">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>📅 학사일정</h2>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <span id="cal-meta" class="muted small"></span>
+            <button id="event-add-btn" class="btn btn-primary btn-sm hidden">+ 학급 일정</button>
+          </div>
+        </div>
+        <div class="cal-toolbar">
+          <button id="cal-prev" class="btn btn-icon" title="이전 달">‹</button>
+          <h3 id="cal-month-label" class="cal-month-label"></h3>
+          <button id="cal-next" class="btn btn-icon" title="다음 달">›</button>
+          <button id="cal-today" class="btn btn-ghost btn-sm">이번 달</button>
+        </div>
+        <div id="cal-grid" class="cal-grid"></div>
+        <h3 class="subhead">📌 다가오는 일정</h3>
+        <div id="cal-upcoming" class="upcoming-list"></div>
+      </div>
+    </section>
+
+    <!-- ============ 급식 ============ -->
+    <section id="view-meal" class="view hidden">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>🍽️ 이번 주 급식</h2>
+          <span class="muted small">심원고등학교 · NEIS 연동</span>
+        </div>
+        <div class="cal-toolbar">
+          <button id="meal-prev" class="btn btn-icon" title="지난주">‹</button>
+          <h3 id="meal-week-label" class="cal-month-label"></h3>
+          <button id="meal-next" class="btn btn-icon" title="다음주">›</button>
+          <button id="meal-today" class="btn btn-ghost btn-sm">이번 주</button>
+        </div>
+        <div id="meal-list" class="meal-list"><div class="empty-state">급식 정보를 불러오는 중…</div></div>
+        <details class="allergy-info">
+          <summary>알레르기 정보 번호 안내</summary>
+          <p>①난류 ②우유 ③메밀 ④땅콩 ⑤대두 ⑥밀 ⑦고등어 ⑧게 ⑨새우 ⑩돼지고기 ⑪복숭아 ⑫토마토 ⑬아황산류 ⑭호두 ⑮닭고기 ⑯쇠고기 ⑰오징어 ⑱조개류(굴,전복,홍합 포함) ⑲잣</p>
+        </details>
+      </div>
+    </section>
+
+    <!-- ============ 명렬표 (제출 체크) ============ -->
+    <section id="view-roster" class="view hidden">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>📄 명렬표</h2>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button id="classlink-btn-roster" class="btn btn-ghost btn-sm hidden">🔑 학생용 링크</button>
+            <button id="roster-edit-btn" class="btn btn-ghost btn-sm hidden">👥 명단 등록</button>
+            <button id="check-add-btn" class="btn btn-primary btn-sm hidden">+ 제출 항목</button>
+          </div>
+        </div>
+        <p class="muted view-desc">🔒 우리 반만 볼 수 있어요. 제출 항목을 누르면 번호·이름(가린 이름) 명렬표가 열립니다. ✓ 체크는 선생님만 할 수 있어요.</p>
+        <div id="check-items" class="check-items"></div>
+        <div id="check-table"></div>
+      </div>
+    </section>
+
+    <!-- ============ 설문조사 ============ -->
+    <section id="view-survey" class="view hidden">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>📊 설문조사</h2>
+          <button id="survey-add-btn" class="btn btn-primary btn-sm hidden">+ 설문 만들기</button>
+        </div>
+        <p class="muted view-desc">진행 중인 설문을 눌러 참여하세요. <b>전체 결과는 선생님만</b> 볼 수 있어요.</p>
+        <div id="survey-list" class="survey-list"></div>
+        <div id="survey-detail"></div>
+      </div>
+    </section>
+
+    <!-- ============ 도구 ============ -->
+    <section id="view-tools" class="view hidden">
+      <div class="panel">
+        <div class="panel-head"><h2>🛠️ 도구</h2></div>
+        <div class="tool-tabs">
+          <button class="tool-tab active" data-tool="pick">🎯 뽑기</button>
+          <button class="tool-tab" data-tool="roulette">🎡 룰렛</button>
+          <button class="tool-tab" data-tool="group">👥 모둠</button>
+          <button class="tool-tab" data-tool="bracket">🏟️ 대진표</button>
+          <button class="tool-tab" data-tool="dice">🎲 주사위</button>
+          <button class="tool-tab" data-tool="score">🏆 점수판</button>
+          <button class="tool-tab" data-tool="timer">⏲️ 타이머</button>
+          <button class="tool-tab" data-tool="stopwatch">⏱️ 스톱워치</button>
+          <button class="tool-tab" data-tool="bell">🔔 종소리</button>
+          <button class="tool-tab" data-tool="noise">📣 소음측정</button>
+          <button class="tool-tab" data-tool="clock">⏰ 시계</button>
+          <button class="tool-tab" data-tool="board">🖍️ 화이트보드</button>
+          <button class="tool-tab" data-tool="qr">🔳 QR</button>
+          <button class="tool-tab" data-tool="calc">🧮 계산기</button>
+          <button class="tool-tab" data-tool="dday">📆 디데이</button>
+        </div>
+
+        <!-- 뽑기 (랜덤 이름/번호 뽑기) -->
+        <div id="tool-pick" class="tool-panel">
+          <div id="pick-result" class="pick-result">🎯</div>
+          <p id="pick-sub" class="muted small pick-sub">아래 [뽑기] 버튼을 누르세요</p>
+          <div class="tool-actions">
+            <button id="pick-btn" class="btn btn-primary">🎯 뽑기</button>
+            <button id="pick-reset" class="btn btn-ghost">기록 초기화</button>
+          </div>
+          <label class="checkbox-row pick-opt"><input id="pick-norepeat" type="checkbox" checked /> 이미 뽑힌 사람 제외 (전원 나올 때까지)</label>
+          <div id="pick-range" class="pick-range hidden">
+            <label>번호 범위 <input id="pick-max" type="number" value="30" min="1" max="100" /> 까지</label>
+          </div>
+          <div id="pick-history" class="pick-history"></div>
+        </div>
+
+        <!-- 모둠 편성 -->
+        <div id="tool-group" class="tool-panel hidden">
+          <div class="group-form">
+            <label>기준
+              <select id="group-mode">
+                <option value="count">모둠 수</option>
+                <option value="size">모둠당 인원</option>
+              </select>
+            </label>
+            <label><span id="group-num-label">모둠 수</span> <input id="group-num" type="number" value="4" min="1" max="20" /></label>
+            <button id="group-make" class="btn btn-primary btn-sm">모둠 짜기</button>
+          </div>
+          <p id="group-source" class="muted small" style="margin:8px 0 12px;"></p>
+          <div id="group-result" class="group-result"></div>
+        </div>
+
+        <!-- 주사위 -->
+        <div id="tool-dice" class="tool-panel hidden">
+          <div id="dice-display" class="dice-display"></div>
+          <div id="dice-sum" class="dice-sum"></div>
+          <div class="timer-set">
+            <label>개수 <input id="dice-count" type="number" value="1" min="1" max="5" /></label>
+          </div>
+          <div class="tool-actions">
+            <button id="dice-roll" class="btn btn-primary">🎲 굴리기</button>
+          </div>
+        </div>
+
+        <!-- 점수판 -->
+        <div id="tool-score" class="tool-panel hidden">
+          <div class="score-add">
+            <input id="score-name" type="text" placeholder="팀/모둠 이름" maxlength="16" />
+            <button id="score-add-btn" class="btn btn-primary btn-sm">＋ 팀 추가</button>
+          </div>
+          <p class="muted small" style="margin:8px 0 12px;">📱 점수는 내 기기에만 저장됩니다.</p>
+          <div id="score-board" class="score-board"></div>
+        </div>
+
+        <!-- 원판 룰렛 -->
+        <div id="tool-roulette" class="tool-panel hidden">
+          <div class="rou-wrap">
+            <div class="rou-pointer">▼</div>
+            <canvas id="rou-canvas" width="320" height="320"></canvas>
+          </div>
+          <div id="rou-result" class="rou-result"></div>
+          <div class="tool-actions">
+            <button id="rou-spin" class="btn btn-primary">🎡 돌리기</button>
+          </div>
+          <label>항목 (쉼표로 구분 — 비우면 명렬표 명단 사용)
+            <input id="rou-items" type="text" placeholder="예: 자리 청소, 칠판 정리, 통과, 한 번 더!" maxlength="200" />
+          </label>
+        </div>
+
+        <!-- 대진표 -->
+        <div id="tool-bracket" class="tool-panel wide hidden">
+          <label>참가 팀/이름 (한 줄에 하나)
+            <textarea id="br-teams" rows="4" placeholder="1모둠&#10;2모둠&#10;3모둠&#10;4모둠"></textarea>
+          </label>
+          <div class="tool-actions">
+            <button id="br-make" class="btn btn-primary">대진표 만들기</button>
+            <button id="br-shuffle" class="btn btn-ghost">🔀 순서 섞어서</button>
+            <button id="br-roster" class="btn btn-ghost">명렬표 불러오기</button>
+          </div>
+          <p class="muted small" style="text-align:center;">경기 카드에서 <b>이긴 팀을 클릭</b>하면 다음 라운드로 올라갑니다.</p>
+          <div id="br-view" class="br-view"></div>
+        </div>
+
+        <!-- 종소리 -->
+        <div id="tool-bell" class="tool-panel hidden">
+          <p class="muted small" style="text-align:center; margin-bottom:16px;">수업에서 바로 쓰는 효과음입니다. 버튼을 눌러 보세요! 🔊</p>
+          <div class="bell-grid">
+            <button class="btn bell-btn" data-bell="school">🏫<br/>학교종</button>
+            <button class="btn bell-btn" data-bell="correct">⭕<br/>딩동댕 (정답)</button>
+            <button class="btn bell-btn" data-bell="wrong">❌<br/>땡! (오답)</button>
+            <button class="btn bell-btn" data-bell="fanfare">🎉<br/>빰빠라밤 (축하)</button>
+            <button class="btn bell-btn" data-bell="attention">👀<br/>집중 (딩동)</button>
+            <button class="btn bell-btn" data-bell="drum">🥁<br/>두구두구</button>
+          </div>
+        </div>
+
+        <!-- 소음측정기 -->
+        <div id="tool-noise" class="tool-panel hidden">
+          <div id="noise-face" class="noise-face">🎤</div>
+          <div class="noise-meter"><div id="noise-bar" class="noise-bar"></div></div>
+          <div id="noise-status" class="noise-status muted">마이크를 켜면 교실 소음을 측정합니다</div>
+          <div class="tool-actions">
+            <button id="noise-toggle" class="btn btn-primary">🎤 측정 시작</button>
+          </div>
+          <label class="noise-th-row">경고 기준:
+            <select id="noise-th">
+              <option value="35">도서관 (아주 조용히)</option>
+              <option value="55" selected>모둠 활동 (보통)</option>
+              <option value="75">자유 활동 (넉넉히)</option>
+            </select>
+          </label>
+          <p class="muted small" style="text-align:center;">측정하려면 브라우저의 마이크 사용을 허용해 주세요. 소리는 저장되지 않습니다.</p>
+        </div>
+
+        <!-- 시계 -->
+        <div id="tool-clock" class="tool-panel hidden">
+          <div id="clock-time" class="clock-time">--:--:--</div>
+          <div id="clock-date" class="clock-date muted"></div>
+        </div>
+
+        <!-- 화이트보드 -->
+        <div id="tool-board" class="tool-panel wide hidden">
+          <div class="wb-toolbar">
+            <button class="wb-color active" data-color="#1d2433" style="background:#1d2433"></button>
+            <button class="wb-color" data-color="#e04f5f" style="background:#e04f5f"></button>
+            <button class="wb-color" data-color="#3b6ef5" style="background:#3b6ef5"></button>
+            <button class="wb-color" data-color="#2e8b57" style="background:#2e8b57"></button>
+            <button id="wb-eraser" class="btn btn-ghost btn-sm">🧽 지우개</button>
+            <label class="wb-size-label">굵기 <input id="wb-size" type="range" min="2" max="24" value="4" /></label>
+            <span class="spacer"></span>
+            <button id="wb-clear" class="btn btn-ghost btn-sm">🗑️ 전체 지우기</button>
+          </div>
+          <canvas id="wb-canvas" class="wb-canvas"></canvas>
+        </div>
+
+        <!-- QR 코드 -->
+        <div id="tool-qr" class="tool-panel hidden">
+          <label>QR로 만들 주소/문구
+            <input id="qr-text" type="text" maxlength="300" />
+          </label>
+          <div class="tool-actions">
+            <button id="qr-make" class="btn btn-primary">🔳 QR 만들기</button>
+            <button id="qr-board" class="btn btn-ghost">게시판 주소로</button>
+          </div>
+          <div id="qr-out" class="qr-out"></div>
+          <p class="muted small" style="text-align:center;">화면에 크게 띄워 학생들이 폰으로 찍게 하세요.</p>
+        </div>
+
+        <!-- 계산기 -->
+        <div id="tool-calc" class="tool-panel hidden">
+          <input id="calc-display" class="calc-display" readonly value="0" />
+          <div class="calc-grid">
+            <button class="btn calc-btn calc-fn" data-key="C">C</button>
+            <button class="btn calc-btn calc-fn" data-key="back">⌫</button>
+            <button class="btn calc-btn calc-fn" data-key="%">%</button>
+            <button class="btn calc-btn calc-op" data-key="/">÷</button>
+            <button class="btn calc-btn" data-key="7">7</button>
+            <button class="btn calc-btn" data-key="8">8</button>
+            <button class="btn calc-btn" data-key="9">9</button>
+            <button class="btn calc-btn calc-op" data-key="*">×</button>
+            <button class="btn calc-btn" data-key="4">4</button>
+            <button class="btn calc-btn" data-key="5">5</button>
+            <button class="btn calc-btn" data-key="6">6</button>
+            <button class="btn calc-btn calc-op" data-key="-">−</button>
+            <button class="btn calc-btn" data-key="1">1</button>
+            <button class="btn calc-btn" data-key="2">2</button>
+            <button class="btn calc-btn" data-key="3">3</button>
+            <button class="btn calc-btn calc-op" data-key="+">+</button>
+            <button class="btn calc-btn calc-zero" data-key="0">0</button>
+            <button class="btn calc-btn" data-key=".">.</button>
+            <button class="btn calc-btn calc-eq" data-key="=">=</button>
+          </div>
+        </div>
+
+        <!-- 스톱워치 -->
+        <div id="tool-stopwatch" class="tool-panel hidden">
+          <div id="sw-display" class="big-time">00:00.0</div>
+          <div class="tool-actions">
+            <button id="sw-start" class="btn btn-primary">▶ 시작</button>
+            <button id="sw-lap" class="btn btn-ghost">🚩 랩</button>
+            <button id="sw-reset" class="btn btn-ghost">초기화</button>
+          </div>
+          <ol id="sw-laps" class="sw-laps"></ol>
+        </div>
+
+        <!-- 타이머 -->
+        <div id="tool-timer" class="tool-panel hidden">
+          <div id="timer-display" class="big-time">05:00</div>
+          <div class="timer-set">
+            <label>분 <input id="timer-min" type="number" value="5" min="0" max="180" /></label>
+            <label>초 <input id="timer-sec" type="number" value="0" min="0" max="59" /></label>
+          </div>
+          <div class="tool-actions">
+            <button id="timer-start" class="btn btn-primary">▶ 시작</button>
+            <button id="timer-reset" class="btn btn-ghost">초기화</button>
+          </div>
+        </div>
+
+        <!-- 디데이 -->
+        <div id="tool-dday" class="tool-panel hidden">
+          <div class="dday-form">
+            <input id="dday-title" type="text" placeholder="예: 기말고사" maxlength="30" />
+            <input id="dday-date" type="date" />
+            <button id="dday-add" class="btn btn-primary btn-sm">추가</button>
+          </div>
+          <p class="muted small" style="margin:8px 0 14px;">📱 디데이는 내 기기에만 저장됩니다.</p>
+          <div id="dday-list" class="upcoming-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 익명 우체통 ============ -->
+    <section id="view-secret" class="view hidden">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>💌 익명 우체통</h2>
+        </div>
+
+        <!-- 학생용: 보내기 -->
+        <div id="secret-student">
+          <p class="muted view-desc">
+            선생님께만 전달되는 <b>비밀 메시지</b>입니다. 다른 학생은 볼 수 없어요.<br />
+            이름을 밝히고 싶으면 마지막에 적어 주세요. (안 적으면 완전 익명)
+          </p>
+          <textarea id="secret-text" rows="6" maxlength="1000"
+            placeholder="하고 싶은 말, 고민, 건의사항 등을 자유롭게 적어 주세요. (최대 1,000자)"></textarea>
+          <div class="secret-actions">
+            <span id="secret-count" class="muted small">0 / 1000</span>
+            <button id="secret-send-btn" class="btn btn-primary">💌 선생님께 보내기</button>
+          </div>
+          <div id="secret-done" class="secret-done hidden">
+            ✅ 메시지가 안전하게 전달되었습니다. 용기 내 줘서 고마워요!
+            <button id="secret-again-btn" class="btn btn-ghost btn-sm">한 통 더 쓰기</button>
+          </div>
+        </div>
+
+        <!-- 교사용: 받은 메시지함 -->
+        <div id="secret-teacher" class="hidden">
+          <h3 class="subhead">📬 받은 메시지</h3>
+          <div id="secret-list" class="secret-list"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 공지 작성/수정 모달 (교사용) -->
+  <div id="notice-modal" class="modal hidden">
+    <div class="modal-card">
+      <h3 id="notice-modal-title">공지 쓰기</h3>
+      <label>제목
+        <input id="nt-title" type="text" placeholder="예: 봉사활동 확인서 제출" />
+      </label>
+      <label>내용
+        <textarea id="nt-body" rows="5" placeholder="자세한 안내 내용"></textarea>
+      </label>
+      <div class="row">
+        <label>마감 일자 (선택)
+          <input id="nt-deadline" type="date" />
+        </label>
+        <label class="checkbox-row" style="align-self:end;">
+          <input id="nt-pinned" type="checkbox" /> 📌 상단 고정
+        </label>
+      </div>
+      <label>제출 서류 / 준비물 (선택, 쉼표로 구분)
+        <input id="nt-items" type="text" placeholder="예: 확인서 원본, 학부모 동의서" />
+      </label>
+      <div class="modal-actions">
+        <button id="nt-delete" class="btn btn-danger hidden">삭제</button>
+        <span class="spacer"></span>
+        <button id="nt-cancel" class="btn btn-ghost">취소</button>
+        <button id="nt-save" class="btn btn-primary">등록</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 학생용 학급 링크 모달 (교사용) -->
+  <div id="classlink-modal" class="modal hidden">
+    <div class="modal-card">
+      <h3>🔑 학생용 학급 링크</h3>
+      <p class="muted small">
+        출결·명렬표는 이 링크로 들어온 기기에서만 보입니다. 학생은 <b>한 번만</b> 열면 그 기기에서 계속 볼 수 있어요.
+        반 단톡방이나 교실 화면의 QR로 나눠 주세요. <b>학급 밖(공개 게시물 등)에는 올리지 마세요.</b>
+      </p>
+      <label>링크
+        <input id="classlink-url" type="text" readonly />
+      </label>
+      <div id="classlink-qr" class="qr-out"></div>
+      <div class="modal-actions">
+        <button id="classlink-rotate" class="btn btn-ghost btn-sm" title="링크가 학급 밖으로 퍼졌을 때 사용">🔄 새 링크로 바꾸기</button>
+        <span class="spacer"></span>
+        <button id="classlink-close" class="btn btn-ghost">닫기</button>
+        <button id="classlink-copy" class="btn btn-primary">📋 복사</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 명단 등록 모달 (교사용) -->
+  <div id="roster-modal" class="modal hidden">
+    <div class="modal-card">
+      <h3>명단 등록</h3>
+      <label>📂 나이스 명렬표 파일 (.xlsx, .csv)
+        <input id="roster-file" type="file" accept=".csv,.xlsx,.xls" />
+      </label>
+      <p class="muted small" style="margin-top:-6px;">
+        나이스에서 받은 명렬표를 그대로 올리면 번호·이름이 아래 칸에 자동으로 채워집니다.
+        내용을 확인한 뒤 <b>[저장]</b>을 누르세요.
+      </p>
+      <div id="roster-file-result" class="import-result hidden"></div>
+      <label>학생 명단 (한 줄에 한 명, "번호 이름" 형식)
+        <textarea id="roster-text" rows="10" placeholder="1 김하늘&#10;2 이바다&#10;3 박구름&#10;&#10;번호 없이 이름만 적으면 순서대로 번호가 붙습니다."></textarea>
+      </label>
+      <div class="modal-actions">
+        <span class="spacer"></span>
+        <button id="roster-cancel" class="btn btn-ghost">취소</button>
+        <button id="roster-save" class="btn btn-primary">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 제출 항목 추가/수정 모달 (교사용) -->
+  <div id="checkitem-modal" class="modal hidden">
+    <div class="modal-card">
+      <h3 id="checkitem-modal-title">제출 항목 추가</h3>
+      <label>항목 이름
+        <input id="ci-title" type="text" placeholder="예: 현장체험학습 동의서" maxlength="50" />
+      </label>
+      <div class="modal-actions">
+        <button id="ci-delete" class="btn btn-danger hidden">삭제</button>
+        <span class="spacer"></span>
+        <button id="ci-cancel" class="btn btn-ghost">취소</button>
+        <button id="ci-save" class="btn btn-primary">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 설문 만들기 모달 (교사용) -->
+  <div id="survey-modal" class="modal hidden">
+    <div class="modal-card">
+      <h3>설문 만들기</h3>
+      <label>설문 제목
+        <input id="sv-title" type="text" placeholder="예: 2학기 현장체험학습 장소 선호도" maxlength="60" />
+      </label>
+      <div id="sv-questions" class="sv-questions"></div>
+      <button id="sv-add-q" class="btn btn-ghost btn-sm">+ 질문 추가</button>
+      <p class="muted small">객관식은 보기를 쉼표(,)로 구분해 입력하세요. 만든 후에는 질문을 바꿀 수 없어요 (마감·삭제만 가능).</p>
+      <div class="modal-actions">
+        <span class="spacer"></span>
+        <button id="sv-cancel" class="btn btn-ghost">취소</button>
+        <button id="sv-save" class="btn btn-primary">설문 시작</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 학급 일정 추가/수정 모달 (교사용) -->
+  <div id="event-modal" class="modal hidden">
+    <div class="modal-card">
+      <h3 id="event-modal-title">학급 일정 추가</h3>
+      <label>제목
+        <input id="ev-title" type="text" placeholder="예: 우리 반 단체사진 촬영" />
+      </label>
+      <label>날짜
+        <input id="ev-date" type="date" />
+      </label>
+      <p class="muted small">🏫 학급 일정은 초록색으로 표시되며 학생들에게 실시간으로 공개됩니다.</p>
+      <div class="modal-actions">
+        <button id="ev-delete" class="btn btn-danger hidden">삭제</button>
+        <span class="spacer"></span>
+        <button id="ev-cancel" class="btn btn-ghost">취소</button>
+        <button id="ev-save" class="btn btn-primary">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
